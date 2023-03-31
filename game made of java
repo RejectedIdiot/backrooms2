@@ -1,0 +1,96 @@
+import javafx.application.Application;
+import javafx.event.EventHandler;
+import javafx.scene.Group;
+import javafx.scene.Scene;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.stage.Stage;
+
+public class BackroomsGame extends Application {
+    private int x = 0; // player's x-coordinate
+    private int y = 0; // player's y-coordinate
+    private double angle = 0; // player's viewing angle
+    private final int TILE_SIZE = 32; // size of each tile in pixels
+    private final int MAP_SIZE = 20; // size of the map in tiles
+    private Rectangle[][] map;
+
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+        Group root = new Group();
+        Scene scene = new Scene(root, TILE_SIZE * MAP_SIZE, TILE_SIZE * MAP_SIZE, Color.BLACK);
+
+        // create the map
+        map = new Rectangle[MAP_SIZE][MAP_SIZE];
+        for (int i = 0; i < MAP_SIZE; i++) {
+            for (int j = 0; j < MAP_SIZE; j++) {
+                Rectangle tile = new Rectangle(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                if (i == 10 && j == 10) {
+                    tile.setFill(Color.GREEN);
+                } else {
+                    tile.setFill(Color.YELLOW);
+                }
+                map[i][j] = tile;
+                root.getChildren().add(tile);
+            }
+        }
+
+        // create the player
+        Rectangle player = new Rectangle(TILE_SIZE / 2, TILE_SIZE / 2, TILE_SIZE / 4, TILE_SIZE / 4);
+        player.setFill(Color.RED);
+        root.getChildren().add(player);
+
+        // handle key presses
+        scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                switch (event.getCode()) {
+                    case W:
+                        movePlayer(1);
+                        break;
+                    case S:
+                        movePlayer(-1);
+                        break;
+                    case A:
+                        angle -= Math.PI / 12;
+                        break;
+                    case D:
+                        angle += Math.PI / 12;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+
+        // handle mouse movement
+        scene.setOnMouseMoved(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                angle = Math.atan2(event.getY() - player.getY() - TILE_SIZE / 2, event.getX() - player.getX() - TILE_SIZE / 2);
+            }
+        });
+
+        primaryStage.setTitle("Backrooms Game");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    // move the player forward or backward
+    private void movePlayer(int distance) {
+        int newX = x + (int) Math.round(distance * Math.cos(angle));
+        int newY = y + (int) Math.round(distance * Math.sin(angle));
+        if (newX >= 0 && newX < MAP_SIZE && newY >= 0 && newY < MAP_SIZE
+                && map[newX][newY].getFill() != Color.YELLOW) {
+            x = newX;
+            y = newY;
+            updatePlayerPosition();
+        }
+    }
+
+    // update the player's position and viewing angle
+    private void updatePlayerPosition() {
+        double playerX = x * TILE_SIZE + TILE_SIZE / 2;
+        double playerY = y * TILE_SIZE + TILE_SIZE / 2;
+        Rectangle player = (Rectangle) ((Group) map[x][y].getParent
